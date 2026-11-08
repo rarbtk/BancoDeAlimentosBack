@@ -2,6 +2,7 @@
 import { Types } from "mongoose";
 import { OrganizationRepository } from "./organization.repository";
 import { IOrganization } from "./organization.model";
+import { AppError } from "../../utils/AppError";
 
 export class OrganizationService {
 
@@ -11,28 +12,34 @@ export class OrganizationService {
     this.organizationRepository = new OrganizationRepository();
   }
 
-  // Crear una organización
+  // Crear organización
   async create(
     data: Partial<IOrganization>
   ): Promise<IOrganization> {
 
-    if (!data.name || !data.email) {
-      throw new Error("Nombre y correo son obligatorios");
+    if (!data.name?.trim() || !data.email?.trim()) {
+      throw new AppError(
+        400,
+        "Nombre y correo son obligatorios"
+      );
     }
 
-    // Verificar si ya existe el correo
-    const organizations =
-      await this.organizationRepository.findAll();
+    const email = data.email.trim().toLowerCase();
 
-    const existingOrganization = organizations.find(
-      org => org.email === data.email?.trim().toLowerCase()
-    );
+    const existing =
+      await this.organizationRepository.findByEmail(email);
 
-    if (existingOrganization) {
-      throw new Error("Ya existe una organización con ese correo");
+    if (existing) {
+      throw new AppError(
+        409,
+        "Ya existe una organización con ese correo"
+      );
     }
 
-    return await this.organizationRepository.create(data);
+    return await this.organizationRepository.create({
+      ...data,
+      email
+    });
   }
 
   // Obtener todas las organizaciones
@@ -40,18 +47,18 @@ export class OrganizationService {
     return await this.organizationRepository.findAll();
   }
 
-  // Buscar organización por ID
+  // Obtener organización por ID
   async findById(id: string): Promise<IOrganization> {
 
     if (!Types.ObjectId.isValid(id)) {
-      throw new Error("ID de organización inválido");
+      throw new AppError(400, "ID de organización inválido");
     }
 
     const organization =
       await this.organizationRepository.findById(id);
 
     if (!organization) {
-      throw new Error("Organización no encontrada");
+      throw new AppError(404, "Organización no encontrada");
     }
 
     return organization;
@@ -63,32 +70,55 @@ export class OrganizationService {
     data: Partial<IOrganization>
   ): Promise<IOrganization> {
 
-    // Comprobar que existe
     await this.findById(id);
 
-    const updatedOrganization =
-      await this.organizationRepository.update(id, data);
-
-    if (!updatedOrganization) {
-      throw new Error("No se pudo actualizar la organización");
+    if (data.name !== undefined && !data.name?.trim()) {
+      throw new AppError(400, "El nombre no puede estar vacío");
     }
 
-    return updatedOrganization;
+    if (data.email !== undefined) {
+
+      if (!data.email?.trim()) {
+        throw new AppError(400, "El correo no puede estar vacío");
+      }
+
+      const email = data.email.trim().toLowerCase();
+
+      const existing =
+        await this.organizationRepository.findByEmail(email);
+
+      if (existing && existing.id !== id) {
+        throw new AppError(
+          409,
+          "Ya existe otra organización con ese correo"
+        );
+      }
+
+      data.email = email;
+    }
+
+    const updated =
+      await this.organizationRepository.update(id, data);
+
+    if (!updated) {
+      throw new AppError(404, "Organización no encontrada");
+    }
+
+    return updated;
   }
 
   // Eliminar organización
   async delete(id: string): Promise<IOrganization> {
 
-    // Comprobar que existe
     await this.findById(id);
 
-    const deletedOrganization =
+    const deleted =
       await this.organizationRepository.delete(id);
 
-    if (!deletedOrganization) {
-      throw new Error("No se pudo eliminar la organización");
+    if (!deleted) {
+      throw new AppError(404, "Organización no encontrada");
     }
 
-    return deletedOrganization;
+    return deleted;
   }
 }

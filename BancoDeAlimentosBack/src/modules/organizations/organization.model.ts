@@ -2,6 +2,7 @@
 import mongoose, { Schema, Document } from "mongoose";
 
 export interface IOrganization extends Document {
+    id: string;
   name: string;
   address: string;
   email: string;
@@ -20,13 +21,17 @@ const OrganizationSchema = new Schema<IOrganization>(
     address: {
       type: String,
       required: true
-    },
-    email: {
-      type: String,
-      required: true,
-      lowercase: true,
-      trim: true
-    },
+    },email: {
+  type: String,
+  required: true,
+  lowercase: true,
+  trim: true,
+  unique: true,
+  match: [
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+    "El correo electrónico no es válido"
+  ]
+},
     phone: {
       type: String,
       required: true

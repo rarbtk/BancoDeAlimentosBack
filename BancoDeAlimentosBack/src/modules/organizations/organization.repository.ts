@@ -25,6 +25,16 @@ export class OrganizationRepository {
     return await OrganizationModel.findById(id);
   }
 
+
+async findByEmail(
+  email: string
+): Promise<IOrganization | null> {
+  return await OrganizationModel.findOne({
+    email: email.trim().toLowerCase()
+  });
+}
+
+
   // Actualizar una organización
   async update(
     id: string,

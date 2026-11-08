@@ -1,7 +1,7 @@
 
 import express, { Application, Request, Response } from "express";
 import cors from "cors";
-
+import donorRoutes from "./modules/donors/donor.routes";
 import organizationRoutes from "./modules/organizations/organization.routes";
 import { errorMiddleware } from "./middlewares/error.middleware";
 
@@ -22,9 +22,13 @@ app.get("/api/health", (req: Request, res: Response) => {
   });
 });
 
+
+
 // Rutas de organizaciones
 app.use("/api/organizations", organizationRoutes);
 
+// Rutas de donantes
+app.use("/api/donors", donorRoutes);
 // Middleware global de errores
 // Debe registrarse después de las rutas
 app.use(errorMiddleware);

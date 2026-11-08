@@ -87,8 +87,8 @@ export class OrganizationService {
       const existing =
         await this.organizationRepository.findByEmail(email);
 
-      if (existing && existing.id !== id) {
-        throw new AppError(
+        if (existing && existing._id.toString() !== id) {
+          throw new AppError(
           409,
           "Ya existe otra organización con ese correo"
         );

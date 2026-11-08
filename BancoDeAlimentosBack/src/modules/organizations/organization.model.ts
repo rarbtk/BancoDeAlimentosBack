@@ -2,7 +2,6 @@
 import mongoose, { Schema, Document } from "mongoose";
 
 export interface IOrganization extends Document {
-    id: string;
   name: string;
   address: string;
   email: string;
